@@ -4,17 +4,18 @@ import os
 import math
 
 notes = "C _ C# Db D _ D# Eb E _ F _ F# Gb G _ G# Ab A _ A# Bb B _".split()
-# compute basic frequency coefficient from note A (=440Hz).
+# compute basic frequency coefficient from note O4 A (=440Hz).
 # alpha * (2 ** 1/12) ** n  =  440
-#  where n = 12 + 12 + 9 = 33
-alpha = 110 / (4*((2**(1/12)) ** 9))
+#  where n = 12*3 + 9 = 45
+# then,  alpha = 440 / ((2**(1/12)) ** 45)
+alpha = 55 / ((2**(1/12)) ** 9)
 
 arg = sys.argv[1]
 if arg[0].isdigit():
     hz = float(arg)
     idx = int(math.log(hz/alpha) / math.log(2) *12 + 0.5)
 
-    print(f"O{int(idx/12)} {notes[(idx % 12)*2]}")
+    print(f"O{int(idx/12)+1} {notes[(idx % 12)*2]}")
 else:
     if arg[0].upper() == "O":
         octave = int(arg[1])
@@ -28,7 +29,7 @@ else:
         octave = 4
 
     idx = notes.index(arg)//2
-    f = alpha*2**((idx + octave*12)/12)
+    f = alpha*2**((idx + (octave-1)*12)/12)
     if os.isatty(1):
         print(f"f = {f:.3f} Hz")
     else:
