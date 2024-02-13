@@ -1,5 +1,10 @@
 #!/usr/bin/env zsh
 
+if [ ! $1 ]; then
+    echo "Usage $1 <NOTE NAME> (#count)"
+    exit 1
+fi
+
 base=$(./octaver.py $1)
 
 if [ $2 ]; then to=$2 else to=8 fi
