@@ -28,13 +28,11 @@ def freq2note(hz):
 
 # exports
 def note2freq(octave, note):
-    error = False
     try:
         idx = notes.index(note) // 2
-    except ValueError:
-        error = True
-    if error:
-        raise Exception("no such note : " + note)
+    except ValueError as ex:
+        ex.args = ("no such note : " + note,)
+        raise
     f = alpha*2**((idx + (octave-1)*12)/12)
     return f
 
