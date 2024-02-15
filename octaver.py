@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import math
-
 ## CONSTANTS
 
 # list of notes. 
@@ -19,14 +18,17 @@ def freq2note(hz):
     idx = int(math.log(hz/alpha) / math.log(2) *12 + 0.5)
     oct = int(idx / 12)+1
     note_idx = (idx % 12)*2
-    note = notes[note_idx]
-    if notes[note_idx+1] != "_":
-        note += "(" + notes[note_idx+1] + ")"
+
+    note = [notes[note_idx]]
+    enh = notes[note_idx+1]
+    if enh != "_":
+        note.append(enh)
+
     return oct, note
 
 # exports
 def note2freq(octave, note):
-    idx = notes.index(arg) // 2
+    idx = notes.index(note) // 2
     f = alpha*2**((idx + (octave-1)*12)/12)
     return f
 
@@ -34,24 +36,53 @@ def note2freq(octave, note):
 if __name__ == "__main__":
     import sys
     import os
-    arg = sys.argv[1]
+    import argparse
 
-    if arg[0].isdigit():
-        oct, note = freq2note(float(arg))
-        print(f"O{oct} {note}")
-    else:
-        if arg[0].upper() == "O":
-            octave = int(arg[1])
-            if len(sys.argv) == 3:
-                arg = sys.argv[2].capitalize()
-            else:
-                arg = "".join(arg[2:]).capitalize()
+    parser = argparse.ArgumentParser(description="convert between the note name and frequency")
+    parser.add_argument('note_spec', nargs="*", help="specify the octave and the note / " + 
+                        "or frequency.\n like 'O3A' / or '440'. The octave can be omitted (default O4).")
+    parser.add_argument('-o', '--octave', help="set the octave (this takes precedence)")
+    parser.add_argument('-n', '--note', help="set the note (this takes precedence)")
+    parser.add_argument('-f', '--freq', help="set frequency (this takes precedence)")
+    opt = parser.parse_args()
+
+    freq=None
+    note=None
+    octv=None
+
+    # process note_spec part
+    for elem in opt.note_spec:
+        if elem[0].isalpha():
+            if elem[0].upper() == "O":
+                octv = int("".join([c for c in elem[1:] if c.isdigit()]))
+                elem = "".join([c for c in elem[1:] if not c.isdigit()])
+            note = elem.capitalize()
         else:
-            print("> no octave specified, assuming O4", file=sys.stderr)
-            arg = sys.argv[1].capitalize()
-            octave = 4
-        f = note2freq(octave, arg)
+            try:
+                freq = float(elem)
+            except ValueError:
+                parser.error("only accept decimal value")
+
+    if opt.freq:
+        freq = float(opt.freq)
+    if opt.note:
+        note = opt.note.capitalize()
+    if opt.octave:
+        octv = int(opt.octave)
+    elif not octv:
+        octv = 4
+
+    if freq and note:
+        parser.error("both frequency and note name are supplied. Only one of these can be specified.")
+
+    if note:
+        f = note2freq(octv, note)
         if os.isatty(1):
             print(f"f = {f:.3f} Hz")
         else:
             print(f"{f:.4f}")
+    elif freq:
+        oct, note = freq2note(freq)
+        print(f"-o{oct} {' '.join(note)}")
+    else:
+        parser.print_usage()
