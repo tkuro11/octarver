@@ -28,7 +28,13 @@ def freq2note(hz):
 
 # exports
 def note2freq(octave, note):
-    idx = notes.index(note) // 2
+    error = False
+    try:
+        idx = notes.index(note) // 2
+    except ValueError:
+        error = True
+    if error:
+        raise Exception("no such note : " + note)
     f = alpha*2**((idx + (octave-1)*12)/12)
     return f
 
@@ -39,11 +45,11 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="convert between the note name and frequency")
-    parser.add_argument('note_spec', nargs="*", help="specify the octave and the note / " + 
-                        "or frequency.\n like 'O3A' / or '440'. The octave can be omitted (default O4).")
-    parser.add_argument('-o', '--octave', help="set the octave (this takes precedence)")
-    parser.add_argument('-n', '--note', help="set the note (this takes precedence)")
-    parser.add_argument('-f', '--freq', help="set frequency (this takes precedence)")
+    parser.add_argument('note_spec', nargs="*", help="""specify the octave and the note 
+                        or frequency.\n like 'O3A' / or '440'. The octave can be omitted (default O4).""")
+    parser.add_argument('-o', '--octave', help="set the octave (this takes precedence)", default = 4)
+    parser.add_argument('-n', '--note',   help="set the note (this takes precedence)")
+    parser.add_argument('-f', '--freq',   help="set frequency (this takes precedence)")
     opt = parser.parse_args()
 
     freq=None
@@ -67,20 +73,23 @@ if __name__ == "__main__":
         freq = float(opt.freq)
     if opt.note:
         note = opt.note.capitalize()
-    if opt.octave:
-        octv = int(opt.octave)
-    elif not octv:
-        octv = 4
+    if not octv:
+        octv= int(opt.octave)
 
     if freq and note:
         parser.error("both frequency and note name are supplied. Only one of these can be specified.")
 
+## note -> freq
     if note:
-        f = note2freq(octv, note)
+        try:
+            f = note2freq(octv, note)
+        except Exception as ex:
+            parser.error(ex)
         if os.isatty(1):
             print(f"f = {f:.3f} Hz")
         else:
             print(f"{f:.4f}")
+## freq -> note
     elif freq:
         oct, note = freq2note(freq)
         print(f"-o{oct} {' '.join(note)}")
