@@ -60,6 +60,9 @@ def main():
             if elem[0].upper() == "O":
                 octv = int("".join([c for c in elem[1:] if c.isdigit()]))
                 elem = "".join([c for c in elem[1:] if not c.isdigit()])
+            if elem[-1].isdigit():
+                octv = int(elem[-1])
+                elem = elem[:-1]
             note = elem.capitalize()
         else:
             try:
@@ -81,16 +84,21 @@ def main():
     if note:
         try:
             f = note2freq(octv, note)
+            reoctv, renote = freq2note(f)
         except Exception as ex:
             parser.error(ex)
         if os.isatty(1):
-            print(f"f = {f:.3f} Hz")
+            print(f"{renote[0]}{reoctv} : {f:.4f} Hz")
         else:
             print(f"{f:.4f}")
 ## freq -> note
     elif freq:
-        oct, note = freq2note(freq)
-        print(f"-o{oct} {' '.join(note)}")
+        octv, note = freq2note(freq)
+        refreq = note2freq(octv, note[0])
+        if os.isatty(1):
+            print(f"{' '.join(note)}{octv} : {refreq:.4f} Hz")
+        else:
+            print(f"{note[0]}{octv}")
     else:
         parser.print_usage()
 

@@ -1,5 +1,13 @@
 import pytest
 from octarver import freq2note, note2freq
+from pathlib import Path
+import subprocess
+import pty
+import os
+
+# ============================================================================
+# Original tests from the repository
+# ============================================================================
 
 class TestFreq2Note:
     """Test conversion from frequency to note name"""
@@ -57,6 +65,7 @@ class TestNote2Freq:
         assert abs(a4 / a3 - 2.0) < 0.01
         assert abs(a5 / a4 - 2.0) < 0.01
 
+
 class TestRoundTrip:
     """Test round-trip conversions maintain consistency"""
     
@@ -89,3 +98,92 @@ class TestRoundTrip:
                 recovered_freq = note2freq(recovered_oct, recovered_note[0])
                 assert abs(original_freq - recovered_freq) < 0.01, \
                     f"Frequency mismatch for {note}{octave}"
+
+# ============================================================================
+# New tests for CLI with different input formats and TTY output
+# ============================================================================
+
+class TestCLI:
+    """Test command-line interface with various input formats and TTY modes"""
+
+    def run_octarver(self, args, use_tty):
+        """Helper to run octarver"""
+        cmd = ['octarver'] + args
+        stdout = ""
+
+        if use_tty is False:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True
+            )
+            stdout = result.stdout
+        elif use_tty is True:
+            slave, master = pty.openpty()
+            result = subprocess.run(
+                cmd,
+                stdout = slave,
+                close_fds=True,
+                text=True
+            )
+            stdout = os.read(master, 100).decode()
+            os.close(master)
+            os.close(slave)
+
+        return stdout.strip(), result.returncode
+    
+    def test_cli_frequency_input(self):
+        """Test CLI with frequency input"""
+        stdout, code = self.run_octarver(['440'], use_tty=True)
+        assert code == 0
+        assert 'A4' in stdout
+        assert '440' in stdout
+    
+    def test_cli_note_format_a4(self):
+        """Test CLI with A4 format"""
+        stdout, code = self.run_octarver(['A4'], use_tty=True)
+        assert code == 0
+        assert 'A4' in stdout
+        assert '440' in stdout
+    
+    def test_cli_note_format_o4a(self):
+        """Test CLI with O4A format"""
+        stdout, code = self.run_octarver(['O4A'], use_tty=True)
+        assert code == 0
+        assert 'A4' in stdout
+        assert '440' in stdout
+    
+    def test_cli_option_format(self):
+        """Test CLI with -o and -n options"""
+        stdout, code = self.run_octarver(['-o', '4', '-n', 'A'], use_tty=True)
+        assert code == 0
+        assert 'A4' in stdout
+        assert '440' in stdout
+    
+    def test_cli_tty_output(self):
+        """Test CLI with TTY output (verbose)"""
+        stdout, code = self.run_octarver(['440'], use_tty=True)
+        assert code == 0
+        assert 'Hz' in stdout
+    
+    def test_cli_non_tty_output_freq_to_note(self):
+        """Test CLI with non-TTY output (compact) - freq to note"""
+        stdout, code = self.run_octarver(['440'], use_tty=False)
+        assert code == 0
+        assert stdout == 'A4'
+        assert 'Hz' not in stdout
+    
+    def test_cli_non_tty_output_note_to_freq(self):
+        """Test CLI with non-TTY output (compact) - note to freq"""
+        stdout, code = self.run_octarver(['A4'], use_tty=False)
+        assert code == 0
+        assert stdout == '440.0000'
+        assert 'Hz' not in stdout
+    
+    def test_cli_note_without_octave(self):
+        """Test CLI with note format without octarve (defaults to O4)"""
+        stdout, code = self.run_octarver(['A'], use_tty=True)
+        assert code == 0
+        assert 'A4' in stdout
+        assert '440' in stdout
+
