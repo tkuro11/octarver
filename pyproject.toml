@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "octarver"
+version = "0.1.0"
+requires-python = ">=3.10"
+description = "Converter between note name and frequency"
+authors = [{name = "Takayuki Kurosawa", email = "tkuro11@gmail.com"}]
+
+[project.scripts]
+octarver = "octarver:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0.2",
+]
+
+[tool.uv.workspace]
+members = [
+    "octarver",
+]
+
