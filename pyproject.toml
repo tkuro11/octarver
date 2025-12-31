@@ -8,7 +8,6 @@ version = "0.1.1"
 requires-python = ">=3.10"
 description = "Octave Range Converter - Convert between musical note names and frequencies"
 readme = "README.md"
-readme-content-type = "text/markdown"
 license = {text = "MIT"}
 authors = [{name = "Takayuki Kurosawa", email = "tkuro11@gmail.com"}]
 
