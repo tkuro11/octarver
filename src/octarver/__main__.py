@@ -96,7 +96,11 @@ def main():
         octv, note = freq2note(freq)
         refreq = note2freq(octv, note[0])
         if os.isatty(1):
-            print(f"{' '.join(note)}{octv} : {refreq:.4f} Hz")
+            diff = abs(freq - refreq)
+            if diff > 0.00001:
+                ratio = freq/refreq
+                log_ratio = f"({(math.log(ratio)/math.log(2)*1200):+.1f} cents)"
+            print(f"{' '.join(note)}{octv} : {refreq:.4f} Hz {log_ratio}")
         else:
             print(f"{note[0]}{octv}")
     else:
